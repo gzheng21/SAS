@@ -1,0 +1,61 @@
+/*Pull dataset and count observations*/
+Data foodweek; options nofmterr;
+Libname foodweek "C:\Users\gzheng01\Box\ph256"; run;
+proc contents data=foodweek.FoodWeek; run;
+proc print data=foodweek.FoodWeek: run;
+proc contents data=foodweek.clwtvis; run; 
+Foodweek- 39 variables, 889 observations
+Clwtvis-5 variable 1035 observations
+
+/*count variables and observations in dataset*/
+proc sort data=foodweek.subject1; 
+by id;
+run;
+proc sort data=foodweek.ivrsrand;by id;run;
+data foodweek.subjects;merge foodweek.subject1 (in = RES) foodweek.ivrsrand;by id;if res = 1;run;
+
+/*create composite dataset*/
+proc sort data=foodweek.clwtvis; by id; run;
+proc sort data=foodweek.oclabflt; by id; run;
+proc sort data=foodweek.FoodWeek; by id; run;
+proc sort data=foodweek.randsf36; by id; run;
+data foodweek.subjects;
+merge foodweek.subjects (in=CMV) foodweek.clwtvis foodweek.oclabflt foodweek.FoodWeek foodweek.randsf36;
+by id;
+if CMV=1;
+run;
+
+/*recode values from visit into new variable newvis*/
+data foodweek.subjects;
+set foodweek.subjects;
+if visit=0 then newvis=0;
+if visit=9 then newvis=6;
+if visit=11 then newvis=12;
+if visit=12 then newvis=18;
+if visit=13 then newvis=24;
+run;
+
+/*splitting dataset*/
+data visit0;
+set foodweek.alldata_long;
+where newvis=0;
+run;
+data visit6;set foodweek.alldata_long;where newvis=6;run;
+data visit12;set foodweek.alldata_long;where newvis=12;run;
+data visit18;set foodweek.alldata_long;where newvis=18;run;
+data visit24;set foodweek.alldata_long;where newvis=24;run;
+
+/*create table*/
+Data foodweek.finaldata_finally;
+Format gender male female $upcase7.;
+Format tx;
+Format educat Doctoral Nondoctoroal college some_college high_school $upcase12.;
+Format bmicat Overweight Normal_weight;
+Proc means data= foodweek.finaldata_finally;
+Proc freq data=foodweek.finaldata_finally;
+Tables gender * TX /chisq;
+Tables race * TX/chisq;
+Tables educate * TX /chisq;
+Tables bmicat * TX/chisq;
+Run;
+
