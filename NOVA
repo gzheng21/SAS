@@ -1,0 +1,5 @@
+*Count number of students by row*
+proc sql;
+select count(*) as N from TMP10.s20203 (READ = stur);   *read=) to add passwords
+
+quit;
